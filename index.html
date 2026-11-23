@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jocuri Geografice pe Hartă – Portal Interactiv</title>
+<style>
+  :root {
+    --bg: #f1f5f9;
+    --surface: #ffffff;
+    --ink: #0f172a;
+    --muted: #475569;
+    --border: #e2e8f0;
+    --navy: #0f172a;
+    --navy-2: #1e293b;
+    --accent: #0284c7;
+    --accent-2: #0ea5e9;
+    --radius: 16px;
+    --shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+    --shadow-hover: 0 14px 32px rgba(15, 23, 42, 0.13);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* HERO */
+  .hero {
+    position: relative;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 55%, #0369a1 100%);
+    color: #fff;
+    padding: 46px 20px 52px;
+    text-align: center;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
+    background-size: 44px 44px;
+    pointer-events: none;
+  }
+  .hero-inner {
+    position: relative;
+    max-width: 820px;
+    margin: 0 auto;
+    z-index: 1;
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.24);
+    backdrop-filter: blur(6px);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    margin-bottom: 16px;
+  }
+  .hero h1 {
+    margin: 0 0 12px;
+    font-size: clamp(28px, 4.4vw, 44px);
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+  }
+  .hero p {
+    margin: 0 auto 24px;
+    max-width: 650px;
+    font-size: clamp(15px, 2vw, 17.5px);
+    color: #dbeafe;
+  }
+  .hero-stats {
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+  .hero-stat {
+    background: rgba(15, 23, 42, 0.45);
+    border: 1px solid rgba(255,255,255,0.18);
+    padding: 7px 14px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #f8fafc;
+  }
+
+  /* FILTER BAR */
+  .controls-wrap {
+    max-width: 1180px;
+    margin: -22px auto 0;
+    padding: 0 20px;
+    position: relative;
+    z-index: 5;
+  }
+  .filter-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  }
+  .filter-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .filter-btn {
+    border: 1px solid var(--border);
+    background: #f8fafc;
+    color: var(--muted);
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.16s ease;
+  }
+  .filter-btn:hover {
+    background: #e0f2fe;
+    border-color: #7dd3fc;
+    color: #0369a1;
+  }
+  .filter-btn.active {
+    background: var(--navy);
+    border-color: var(--navy);
+    color: #ffffff;
+  }
+  .search-input {
+    border: 1px solid var(--border);
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 8px 13px;
+    font-size: 14px;
+    color: var(--ink);
+    min-width: 220px;
+    flex: 0 1 260px;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .search-input:focus {
+    border-color: var(--accent);
+    background: #fff;
+  }
+
+  /* MAIN CONTENT */
+  .container {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+  }
+
+  .section-block {
+    margin-bottom: 42px;
+  }
+  .section-block.hidden {
+    display: none;
+  }
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  .section-title {
+    margin: 0;
+    font-size: 21px;
+    font-weight: 800;
+    color: var(--navy);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-sub {
+    font-size: 14px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
+  .grid.two-col {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    position: relative;
+  }
+  .card.hidden {
+    display: none;
+  }
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--card-color, #0284c7);
+  }
+  .card-stripe {
+    height: 6px;
+    background: var(--card-color, #0284c7);
+    width: 100%;
+  }
+  .card-body {
+    padding: 20px 20px 18px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  .card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 23px;
+    background: var(--card-soft, #e0f2fe);
+    flex-shrink: 0;
+  }
+  .card-tag {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--card-soft, #e0f2fe);
+    color: var(--card-text, #0369a1);
+  }
+  .card h3 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--navy);
+    line-height: 1.25;
+  }
+  .card p {
+    margin: 0 0 18px;
+    font-size: 14.2px;
+    color: var(--muted);
+    flex: 1;
+  }
+  .play-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 11px 16px;
+    border-radius: 11px;
+    background: var(--card-color, #0284c7);
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 14.5px;
+    font-weight: 700;
+    letter-spacing: 0.1px;
+    transition: filter 0.15s ease, transform 0.15s ease;
+  }
+  .play-btn:hover {
+    filter: brightness(1.08);
+  }
+  .play-btn:active {
+    transform: scale(0.98);
+  }
+  .play-btn span.arrow {
+    transition: transform 0.18s ease;
+  }
+  .card:hover .play-btn span.arrow {
+    transform: translateX(4px);
+  }
+
+  .empty-state {
+    display: none;
+    text-align: center;
+    padding: 42px 20px;
+    background: var(--surface);
+    border: 1px dashed #cbd5e1;
+    border-radius: var(--radius);
+    color: var(--muted);
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  footer {
+    text-align: center;
+    padding: 24px 20px 36px;
+    color: #64748b;
+    font-size: 13.5px;
+    border-top: 1px solid var(--border);
+    background: #ffffff;
+  }
+  footer strong {
+    color: var(--navy);
+  }
+
+  @media (max-width: 960px) {
+    .grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 640px) {
+    .grid, .grid.two-col {
+      grid-template-columns: 1fr;
+    }
+    .search-input {
+      width: 100%;
+      flex: 1 1 100%;
+    }
+    .hero {
+      padding: 36px 16px 46px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">🗺️ Atlas Interactiv de Antrenament</div>
+    <h1>Jocuri Geografice pe Hartă</h1>
+    <p>Învață geografia jucându-te! Găsește obiectivele pe hartă contra cronometru, adună un scor de 100% și descoperă cele mai spectaculoase recorduri ale planetei și ale Republicii Moldova.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">🎯 11 jocuri interactive</div>
+      <div class="hero-stat">⚡ Fără cont, direct în browser</div>
+      <div class="hero-stat">🏆 Punctaj și acuratețe în timp real</div>
+    </div>
+  </div>
+</header>
+
+<div class="controls-wrap">
+  <div class="filter-bar">
+    <div class="filter-pills" role="tablist" aria-label="Filtrare jocuri">
+      <button type="button" class="filter-btn active" data-filter="all">Toate (11)</button>
+      <button type="button" class="filter-btn" data-filter="continente">Continente și coordonate (6)</button>
+      <button type="button" class="filter-btn" data-filter="moldova">Republica Moldova (3)</button>
+      <button type="button" class="filter-btn" data-filter="recorduri">Recorduri geografice (4)</button>
+    </div>
+    <input type="search" id="searchInput" class="search-input" placeholder="🔍 Caută o hartă sau temă..." aria-label="Caută un joc geografic">
+  </div>
+</div>
+
+<main class="container">
+
+  <!-- SECȚIUNEA 1: ORIENTARE ȘI CONTINENTE -->
+  <section class="section-block" data-section="continente">
+    <div class="section-header">
+      <h2 class="section-title">🌍 Continente și Orientare pe Glob</h2>
+      <span class="section-sub">De la rețeaua de paralele și meridiane până la relieful și apele fiecărui continent</span>
+    </div>
+    <div class="grid">
+
+      <article class="card" data-cats="continente" style="--card-color:#0284c7; --card-soft:#e0f2fe; --card-text:#0369a1;">
+        <div class="card-stripe"></div>
+        <div class="card-body">
+          <div class="card-top">
+            <div class="card-icon">🧭</div>
+            <span class="card-tag">Orientare</span>
+          </div>
+          <h3>Coordonate geografice</h3>
+          <p>Transformă-te într-un navigator adevărat! Descifrează latitudinea și longitudinea și localizează exact punctele pe rețeaua globului.</p>
+          <a class="play-btn" href="https://frostbyte-md.github.io/Jocuri-geografice-cu-harta/coordonate_geografice.html">
+            Pornește busola <span class="arrow">→</span>
+          </a>
+        </div>
+      </article>
+
+      <article class="card" data-cats="continente" style="--card-color:#059669; --card-soft:#d1fae5; --card-text:#047857;">
+        <div class="card-stripe"></div>
+        <div class="card-body">
+          <div class="card-top">
+            <div class="card-icon">🏔️</div>
+            <span class="card-tag">Hartă fizică</span>
+          </div>
+          <h3>Eurasia</h3>
+          <p>Pornește în cea mai amplă expediție: de la țărmurile Atlanticului până în Pacific, prin Alpi, Himalaya, Siberia și marile fluvii ale lumii.</p>
+          <a class="play-btn" href="https://frostbyte-md.github.io/Jocuri-geografice-cu-harta/eurasia.html">
+            Explorează Eurasia <span class="arrow">→</span>
+          </a>
+        </div>
+      </article>
+
+      <article class="card" data-cats="continente" style="--card-color:#d97706; --card-soft:#fef3c7; --card-text:#b45309;">
+        <div class="card-stripe"></div>
+        <div class="card-body">
+          <div class="card-top">
+            <div class="card-icon">🦁</div>
+            <span class="card-tag">Hartă fizică</span>
+          </div>
+          <h3>Africa</h3>
+          <p>Traversează Sahara, urcă spre Kilimanjaro și urmărește cursul Nilului și al fluviului Congo pe continentul contrastelor extreme.</p>
+          <a class="play-btn" href="https://frostbyte-md.github.io/Jocuri-geografice-cu-harta/africa.html">
+            Explorează Africa <span class="arrow">→</span>
+          </a>
+        </div>
+      </article>
+
+      <article class="card" data-cats="continente" style="--card-color:#2563eb; --card-soft:#dbeafe; --card-text:#1d4ed8;">
+        <div class="card-stripe"></div>
+        <div class="card-body">
+          <div class="card-top">
+            <div class="card-icon">🦅</div>
+            <span class="card-tag">Hartă fizică</span>
+          </div>
+          <h3>America de Nord</h3>
+          <p>Descoperă Marile Lacuri, Munții Stâncoși, fluviul Mississippi și golful Mexic într-o provocare rapidă de orientare pe hartă.</p>
+          <a class="play-btn" href="https://frostbyte-md.github.io/Jocuri-geografice-cu-harta/america-nord.html">
+            Explorează America de Nord <span class="arrow">→</span>
+          </a>
+        </div>
+      </article>
+
+      <article class="card" data-cats="continente" style="--card-color:#16a34a; --card-soft:#dcfce7; --card-text:#15803d;">
+        <div class="card-stripe"></div>
+        <div class="card-body">
+          <div class="card-top">
+            <div class="card-icon">🌴</div>
+            <span class="card-tag">Hartă fizică</span>
+          </div>
+          <h3>America de Sud</h3>
+          <p>Urmărește cel mai lung lanț muntos — Anzii, pătrunde în bazinul Amazonului și localizează podișurile și deșerturile sud-americane.</p>
+          <a class="play-btn" href="https://frostbyte-md.github.io/Jocuri-geografice-cu-harta/america-sud.html">
+            Explorează America de Sud <span class="arrow">→</span>
+          </a>
+        </div>
+      </article>
+
+      <article class="card" data-cats="continente" style="--card-color:#0891b2; --card-soft:#cffafe; --card-text:#0e7490;">
+        <div class="card-stripe"></div>
+        <div class="card-body">
+          <div class="card-top">
+            <div class="card-icon">🦘</div>
+            <span class="card-tag">Hartă fizică</span>
+          </div>
+          <h3>Australia și Oceania</h3>
+          <p>Călătorește la antipozi! Găsește Marea Barieră de Corali, deșerturile australiene și principalele arhipelaguri din Oceanul Pacific.</p>
+          <a class="play-btn" href="https://frostbyte-md.github.io/Jocuri-geografice-cu-harta/australia-oceania.html">
+            Explorează Oceania <span class="arrow">→</span>
+          </a>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- SECȚIUNEA 2: REPUBLICA MOLDOVA -->
+  <section class="section-block" data-section="moldova">
+    <div class="section-header">
+      <h2 class="section-title">🇲🇩 Republica Moldova</h2>
+      <span class="section-sub">Cunoaște-ți țara în detaliu: unități de relief, ape, raioane, orașe și superlative naționale</span>
+    </div>
+    <div class="grid">
+
+      <article class="card" data-cats="moldova" style="--card-color:#0f766e; --card-soft:#ccfbf1; --card-text:#115e59;">
+        <div class="card-stripe"></div>
+        <div class="card-body">
+          <div class="card-top">
+            <div class="card-icon">🏞️</div>
+            <span class="card-tag">Hartă fizică</span>
+          </div>
+          <h3>Republica Moldova</h3>
+          <p>Recunoaște dealurile, podișurile, câmpiile și râurile țării noastre. Antrenamentul ideal pentru lecții, evaluări și olimpiade.</p>
+          <a class="play-btn" href="https://frostbyte-md.github.io/Jocuri-geografice-cu-harta/moldova.html">
+            Joacă pe harta Moldovei <span class="arrow">→</span>
+          </a>
+        </div>
+      </article>
+
+      <article class="card" data-cats="moldova recorduri" style="--card-color:#ea580c; --card-soft:#ffedd5; --card-text:#c2410c;">
+        <div class="card-stripe"></div>
+        <div class="card-body">
+          <div class="card-top">
+            <div class="card-icon">⛰️</div>
+            <span class="card-tag">Recorduri fizice</span>
+          </div>
+          <h3>Recorduri geografice – Republica Moldova (fizică)</h3>
+          <p>Unde se află cel mai înalt vârf, cel mai adânc punct, cel mai mare lac sau cea mai veche rezervație? Testează-ți cunoștințele!</p>
+          <a class="play-btn" href="https://frostbyte-md.github.io/Jocuri-geografice-cu-harta/recorduri-moldova-fizica.html">
+            Acceptă provocarea <span class="arrow">→</span>
+          </a>
+        </div>
+      </article>
+
+      <article class="card" data-cats="moldova recorduri" style="--card-color:#0284c7; --card-soft:#e0f2fe; --card-text:#0369a1;">
+        <div class="card-stripe"></div>
+        <div class="card-body">
+          <div class="card-top">
+            <div class="card-icon">🏙️</div>
+            <span class="card-tag">Recorduri umane</span>
+          </div>
+          <h3>Recorduri geografice – Republica Moldova (umană)</h3>
+          <p>De la cel mai mare sat și unicul port la Dunăre până la cele mai mari galerii subterane de vin din lume — găsește-le pe harta raioanelor!</p>
+          <a class="play-btn" href="https://frostbyte-md.github.io/Jocuri-geografice-cu-harta/recorduri_umana_moldova.html">
+            Descoperă recordurile <span class="arrow">→</span>
+          </a>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- SECȚIUNEA 3: RECORDURI EURASIA -->
+  <section class="section-block" data-section="recorduri-eurasia">
+    <div class="section-header">
+      <h2 class="section-title">🏆 Recordurile Geografice ale Eurasiei</h2>
+      <span class="section-sub">Superlative naturale, state, metropole și repere economice pe cel mai vast continent al Terrei</span>
+    </div>
+    <div class="grid two-col">
+
+      <article class="card" data-cats="recorduri" style="--card-color:#10b981; --card-soft:#d1fae5; --card-text:#047857;">
+        <div class="card-stripe"></div>
+        <div class="card-body">
+          <div class="card-top">
+            <div class="card-icon">🌋</div>
+            <span class="card-tag">Recorduri fizice</span>
+          </div>
+          <h3>Recorduri geografice – Eurasia (fizică)</h3>
+          <p>Everest, Marea Moartă, Lacul Baikal, polul frigului și polul ploilor — poți indica fără greșeală toate extremele naturii eurasiatice?</p>
+          <a class="play-btn" href="https://frostbyte-md.github.io/Jocuri-geografice-cu-harta/recorduri_eurasia.html">
+            Cucerește recordurile fizice <span class="arrow">→</span>
+          </a>
+        </div>
+      </article>
+
+      <article class="card" data-cats="recorduri" style="--card-color:#7c3aed; --card-soft:#ede9fe; --card-text:#6d28d9;">
+        <div class="card-stripe"></div>
+        <div class="card-body">
+          <div class="card-top">
+            <div class="card-icon">🏛️</div>
+            <span class="card-tag">Recorduri umane</span>
+          </div>
+          <h3>Recorduri geografice – Eurasia (umană)</h3>
+          <p>Cel mai întins stat, cea mai populată țară, cele mai mari metropole, porturi și rute feroviare — dovedește că stăpânești harta politică!</p>
+          <a class="play-btn" href="https://frostbyte-md.github.io/Jocuri-geografice-cu-harta/recorduri_umana_eurasia.html">
+            Cucerește recordurile umane <span class="arrow">→</span>
+          </a>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <div class="empty-state" id="emptyState">
+    🔎 Nu a fost găsit niciun joc pentru această căutare. Încearcă alt cuvânt (ex: „Moldova”, „Eurasia”, „recorduri”).
+  </div>
+
+</main>
+
+<footer>
+  <strong>Jocuri Geografice pe Hartă</strong> • Colecție interactivă de geografie fizică și umană pentru elevi
+</footer>
+
+<script>
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const searchInput = document.getElementById('searchInput');
+  const cards = document.querySelectorAll('.card');
+  const sections = document.querySelectorAll('.section-block');
+  const emptyState = document.getElementById('emptyState');
+
+  let activeFilter = 'all';
+
+  function normalizeText(str) {
+    return str
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function applyFilters() {
+    const query = normalizeText(searchInput.value.trim());
+    let totalVisible = 0;
+
+    cards.forEach(card => {
+      const cats = (card.dataset.cats || '').split(' ');
+      const matchesCat = activeFilter === 'all' || cats.includes(activeFilter);
+      const cardText = normalizeText(card.textContent);
+      const matchesQuery = !query || cardText.includes(query);
+
+      const show = matchesCat && matchesQuery;
+      card.classList.toggle('hidden', !show);
+      if (show) totalVisible++;
+    });
+
+    sections.forEach(sec => {
+      const visibleInSection = sec.querySelectorAll('.card:not(.hidden)').length;
+      sec.classList.toggle('hidden', visibleInSection === 0);
+    });
+
+    emptyState.style.display = totalVisible === 0 ? 'block' : 'none';
+  }
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilter = btn.dataset.filter;
+      applyFilters();
+    });
+  });
+
+  searchInput.addEventListener('input', applyFilters);
+</script>
+
+</body>
+</html>
